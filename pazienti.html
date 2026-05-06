@@ -1,0 +1,1455 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Studio Dentistico - Registro Pazienti</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        
+        :root {
+            --bg-primary: #1e3c72;
+            --bg-secondary: #2a5298;
+            --bg-card: #ffffff;
+            --bg-section: #f8f9fa;
+            --bg-input: #ffffff;
+            --bg-table: #ffffff;
+            --bg-hover: #e3f2fd;
+            --bg-tag: #e3f2fd;
+            --text-primary: #333333;
+            --text-secondary: #555555;
+            --text-muted: #666666;
+            --text-light: #ffffff;
+            --border-color: #e0e0e0;
+            --shadow: 0 20px 60px rgba(0,0,0,0.3);
+            --gradient-header: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-body: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            --gradient-btn-primary: linear-gradient(135deg, #667eea, #764ba2);
+            --gradient-btn-success: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-btn-info: linear-gradient(135deg, #17a2b8, #138496);
+            --gradient-btn-warning: linear-gradient(135deg, #ffc107, #ff9800);
+            --gradient-btn-danger: linear-gradient(135deg, #dc3545, #c82333);
+            --gradient-btn-secondary: linear-gradient(135deg, #6c757d, #5a6268);
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --bg-section: #334155;
+            --bg-input: #475569;
+            --bg-table: #1e293b;
+            --bg-hover: #334155;
+            --bg-tag: #1e40af;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --text-muted: #94a3b8;
+            --text-light: #f1f5f9;
+            --border-color: #475569;
+            --shadow: 0 20px 60px rgba(0,0,0,0.5);
+            --gradient-header: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            --gradient-body: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --gradient-btn-primary: linear-gradient(135deg, #3b82f6, #8b5cf6);
+            --gradient-btn-success: linear-gradient(135deg, #22c55e, #10b981);
+            --gradient-btn-info: linear-gradient(135deg, #06b6d4, #0891b2);
+            --gradient-btn-warning: linear-gradient(135deg, #f59e0b, #d97706);
+            --gradient-btn-danger: linear-gradient(135deg, #ef4444, #dc2626);
+            --gradient-btn-secondary: linear-gradient(135deg, #64748b, #475569);
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--gradient-body);
+            min-height: 100vh;
+            padding: 20px;
+            transition: all 0.3s ease;
+            color: var(--text-primary);
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .header {
+            background: var(--gradient-header);
+            color: var(--text-light);
+            padding: 30px;
+            text-align: center;
+            position: relative;
+        }
+        .header h1 { font-size: 2rem; margin-bottom: 10px; }
+        .header p { opacity: 0.9; }
+        
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .theme-toggle:hover {
+            background: rgba(255,255,255,0.3);
+            transform: scale(1.05);
+        }
+        
+        .main-content { padding: 30px; }
+        
+        .form-section {
+            background: var(--bg-section);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label {
+            font-weight: 600;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        .form-group input, .form-group select, .form-group textarea {
+            padding: 12px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
+        }
+        
+        .symptoms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 10px;
+            background: var(--bg-input);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .symptom-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--bg-section);
+            border-radius: 6px;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+        .symptom-item:hover {
+            background: var(--bg-hover);
+            border-color: #667eea;
+        }
+        .symptom-item input {
+            margin-right: 10px;
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+        .symptom-item label {
+            cursor: pointer;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+        
+        .button-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 25px;
+        }
+        .btn {
+            padding: 14px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-primary { background: var(--gradient-btn-primary); color: white; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(102,126,234,0.4); }
+        .btn-success { background: var(--gradient-btn-success); color: white; }
+        .btn-success:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(40,167,69,0.4); }
+        .btn-info { background: var(--gradient-btn-info); color: white; }
+        .btn-info:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(23,162,184,0.4); }
+        .btn-warning { background: var(--gradient-btn-warning); color: #333; }
+        .btn-warning:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255,193,7,0.4); }
+        .btn-danger { background: var(--gradient-btn-danger); color: white; }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220,53,69,0.4); }
+        .btn-secondary { background: var(--gradient-btn-secondary); color: white; }
+        .btn-secondary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,117,125,0.4); }
+        .btn-test { background: linear-gradient(135deg, #9c27b0, #7b1fa2); color: white; }
+        .btn-test:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(156,39,176,0.4); }
+        
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .stat-card {
+            background: var(--gradient-header);
+            color: white;
+            padding: 20px 15px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 0;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+        .stat-number { 
+            font-size: 1.8rem; 
+            font-weight: bold;
+            max-width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .stat-label { 
+            font-size: 0.8rem; 
+            opacity: 0.9; 
+            margin-top: 5px;
+            line-height: 1.3;
+        }
+        
+        .table-container {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 25px;
+            background: var(--bg-table);
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .patient-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .patient-table th {
+            background: var(--bg-section);
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--text-primary);
+            border-bottom: 2px solid var(--border-color);
+            white-space: nowrap;
+        }
+        .patient-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        .patient-table tr {
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .patient-table tr:hover {
+            background: var(--bg-hover);
+        }
+        .patient-table tr:last-child td {
+            border-bottom: none;
+        }
+        .btn-action {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-right: 5px;
+        }
+        .btn-view { background: #17a2b8; color: white; }
+        .btn-view:hover { background: #138496; }
+        .btn-delete { background: #dc3545; color: white; }
+        .btn-delete:hover { background: #c82333; }
+        
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            width: 100%;
+            max-width: 900px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal-header {
+            background: var(--gradient-header);
+            color: white;
+            padding: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .modal-header h2 { font-size: 1.5rem; }
+        .modal-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .modal-close:hover { background: rgba(255,255,255,0.3); }
+        .modal-body { padding: 30px; }
+        .modal-footer {
+            padding: 20px 30px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-card);
+        }
+        
+        .patient-card {
+            background: var(--bg-section);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        .patient-card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .info-item {
+            background: var(--bg-input);
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+        .info-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .info-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        .symptoms-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+        .symptom-tag {
+            background: var(--bg-tag);
+            color: #1976d2;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            color: white;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s;
+            z-index: 2000;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(100px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .storage-status {
+            text-align: center;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .storage-ok { background: #d4edda; color: #155724; }
+        .storage-warn { background: #fff3cd; color: #856404; }
+        [data-theme="dark"] .storage-ok { background: #1b4332; color: #95d5b2; }
+        [data-theme="dark"] .storage-warn { background: #7c5c0f; color: #f4d35e; }
+        
+        .hidden-input { display: none; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+        .empty-state-icon { font-size: 4rem; margin-bottom: 20px; }
+        .empty-state h3 { margin-bottom: 10px; color: var(--text-secondary); }
+        
+        .search-box {
+            margin-bottom: 20px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 1rem;
+            background: var(--bg-input);
+            color: var(--text-primary);
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .search-results-info {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-section);
+            padding: 4px 10px;
+            border-radius: 12px;
+        }
+        
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #667eea;
+            width: 0%;
+            transition: width 0.3s;
+            z-index: 3000;
+            display: none;
+        }
+        .progress-bar.active { display: block; }
+        
+        @media print {
+            body { background: white; }
+            .container { box-shadow: none; }
+            .button-group, .btn-action, .search-box, .theme-toggle { display: none; }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 { font-size: 1.5rem; }
+            .form-grid { grid-template-columns: 1fr; }
+            .stats-bar { grid-template-columns: repeat(2, 1fr); }
+            .button-group { flex-direction: column; }
+            .btn { width: 100%; justify-content: center; }
+            .stat-number { font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="progress-bar" id="progressBar"></div>
+<div class="notification" id="notification"></div>
+
+<div class="container">
+    <div class="header">
+        <h1>🦷 Studio Dentistico - Registro Pazienti</h1>
+        <p>Gestione completa pazienti e sintomatologie dentali</p>
+        <button class="theme-toggle" onclick="toggleTheme()" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeText">Tema Scuro</span>
+        </button>
+    </div>
+    
+    <div class="main-content">
+        <div id="storageStatus" class="storage-status">Verifica memoria...</div>
+        
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number" id="totalPatients">0</div>
+                <div class="stat-label">Pazienti Totali</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="todayPatients">0</div>
+                <div class="stat-label">Oggi</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="lastSave">--</div>
+                <div class="stat-label">Ultimo Salvataggio</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="storageSize">0 KB</div>
+                <div class="stat-label">Spazio Usato</div>
+            </div>
+        </div>
+        
+        <!-- Form -->
+        <div class="form-section">
+            <div class="section-title">👤 Dati Anagrafici</div>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Nome *</label>
+                    <input type="text" id="nome" placeholder="Nome">
+                </div>
+                <div class="form-group">
+                    <label>Cognome *</label>
+                    <input type="text" id="cognome" placeholder="Cognome">
+                </div>
+                <div class="form-group">
+                    <label>Data di Nascita</label>
+                    <input type="date" id="dataNascita">
+                </div>
+                <div class="form-group">
+                    <label>Sesso</label>
+                    <select id="sesso">
+                        <option value="">Seleziona</option>
+                        <option value="M">Maschio</option>
+                        <option value="F">Femmina</option>
+                        <option value="A">Altro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Codice Fiscale</label>
+                    <input type="text" id="codiceFiscale" placeholder="CODFIS12A34B567C">
+                </div>
+                <div class="form-group">
+                    <label>Telefono</label>
+                    <input type="tel" id="telefono" placeholder="+39 333 1234567">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="email" placeholder="email@esempio.it">
+                </div>
+                <div class="form-group">
+                    <label>Indirizzo</label>
+                    <input type="text" id="indirizzo" placeholder="Via Roma 123">
+                </div>
+                <div class="form-group">
+                    <label>Città</label>
+                    <input type="text" id="citta" placeholder="Roma">
+                </div>
+                <div class="form-group">
+                    <label>CAP</label>
+                    <input type="text" id="cap" placeholder="00100">
+                </div>
+                <div class="form-group">
+                    <label>Provincia</label>
+                    <input type="text" id="provincia" placeholder="RM">
+                </div>
+                <div class="form-group">
+                    <label>Professione</label>
+                    <input type="text" id="professione" placeholder="Professione">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="section-title">🦷 Sintomatologie Dentali</div>
+            <div class="symptoms-grid" id="symptomsGrid">
+            </div>
+        </div>
+        
+        <div class="form-section">
+            <div class="section-title">📝 Note Aggiuntive</div>
+            <div class="form-group">
+                <textarea id="note" rows="4" placeholder="Note cliniche, allergie, farmaci in uso, osservazioni..."></textarea>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn btn-success" onclick="salvaPaziente()">💾 Salva Paziente</button>
+            <button class="btn btn-primary" onclick="resetForm()">🔄 Nuovo Paziente</button>
+            <button class="btn btn-info" onclick="scaricaExcel()">📥 Export Excel</button>
+            <button class="btn btn-warning" onclick="exportDati()">📤 Backup Dati</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()">📥 Ripristina Backup</button>
+            <button class="btn btn-test" onclick="generaPazientiTest()">🧪 Genera 100 Test</button>
+            <button class="btn btn-danger" onclick="cancellaTutto()">🗑️ Cancella Tutto</button>
+        </div>
+        
+        <input type="file" id="importFile" class="hidden-input" accept=".json" onchange="importDati(this)">
+        
+        <!-- Search -->
+        <div class="search-box">
+            <input type="text" id="searchBox" placeholder="🔍 Cerca paziente per nome, cognome, telefono, email, città..." oninput="cercaPaziente()">
+            <span class="search-results-info" id="searchResultsInfo"></span>
+        </div>
+        
+        <!-- Table -->
+        <div class="table-container">
+            <div class="table-responsive">
+                <table class="patient-table">
+                    <thead>
+                        <tr>
+                            <th>Nome</th>
+                            <th>Cognome</th>
+                            <th>Telefono</th>
+                            <th>Data Nascita</th>
+                            <th>Ultima Visita</th>
+                            <th>Sintomi</th>
+                            <th>Azioni</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Patient Card -->
+<div class="modal-overlay" id="patientModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">🦷 Scheda Paziente</h2>
+            <button class="modal-close" onclick="chiudiModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <input type="hidden" id="modalPatientId">
+            
+            <div class="patient-card">
+                <h3>👤 Dati Anagrafici</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Nome</div>
+                        <div class="info-value"><input type="text" id="modalNome" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Cognome</div>
+                        <div class="info-value"><input type="text" id="modalCognome" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Data di Nascita</div>
+                        <div class="info-value"><input type="date" id="modalDataNascita" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Sesso</div>
+                        <div class="info-value">
+                            <select id="modalSesso" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);">
+                                <option value="">Seleziona</option>
+                                <option value="M">Maschio</option>
+                                <option value="F">Femmina</option>
+                                <option value="A">Altro</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Codice Fiscale</div>
+                        <div class="info-value"><input type="text" id="modalCodiceFiscale" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Telefono</div>
+                        <div class="info-value"><input type="tel" id="modalTelefono" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Email</div>
+                        <div class="info-value"><input type="email" id="modalEmail" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Indirizzo</div>
+                        <div class="info-value"><input type="text" id="modalIndirizzo" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Città</div>
+                        <div class="info-value"><input type="text" id="modalCitta" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">CAP</div>
+                        <div class="info-value"><input type="text" id="modalCap" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Provincia</div>
+                        <div class="info-value"><input type="text" id="modalProvincia" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Professione</div>
+                        <div class="info-value"><input type="text" id="modalProfessione" style="width:100%;border:1px solid var(--border-color);padding:8px;border-radius:4px;background:var(--bg-input);color:var(--text-primary);"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="patient-card">
+                <h3>🦷 Sintomatologie Dentali</h3>
+                <div class="symptoms-grid" id="modalSymptomsGrid">
+                </div>
+            </div>
+            
+            <div class="patient-card">
+                <h3>📝 Note Cliniche</h3>
+                <div class="form-group">
+                    <textarea id="modalNote" rows="4" style="width:100%;border:1px solid var(--border-color);padding:12px;border-radius:8px;background:var(--bg-input);color:var(--text-primary);" placeholder="Note cliniche, allergie, farmaci in uso..."></textarea>
+                </div>
+            </div>
+            
+            <div class="patient-card">
+                <h3>📅 Informazioni Visita</h3>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <div class="info-label">Data Inserimento</div>
+                        <div class="info-value" id="modalDataInserimento">-</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">Ultimo Aggiornamento</div>
+                        <div class="info-value" id="modalDataAggiornamento">-</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="chiudiModal()">Annulla</button>
+            <button class="btn btn-primary" onclick="aggiornaPaziente()">💾 Aggiorna Scheda</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const STORAGE_KEY = 'studio_dentistico_pazienti_v4';
+    const BACKUP_KEY = 'studio_dentistico_backup';
+    const BACKUP_KEY_DATE = 'studio_dentistico_backup_date';
+    const THEME_KEY = 'studio_dentistico_theme';
+    let pazienti = [];
+    let localStorageAvailable = false;
+    let editingPatientId = null;
+
+    const nomiMaschili = ['Alessandro', 'Andrea', 'Antonio', 'Bruno', 'Carlo', 'Claudio', 'Daniele', 'Davide', 'Enrico', 'Fabio', 'Francesco', 'Gabriele', 'Giovanni', 'Giuseppe', 'Luca', 'Marco', 'Mario', 'Matteo', 'Michele', 'Paolo', 'Pietro', 'Riccardo', 'Roberto', 'Salvatore', 'Stefano', 'Tommaso', 'Vincenzo', 'Alberto', 'Angelo', 'Domenico'];
+    const nomiFemminili = ['Alessandra', 'Anna', 'Antonella', 'Barbara', 'Chiara', 'Cristina', 'Daniela', 'Elena', 'Elisabetta', 'Francesca', 'Giulia', 'Giuseppina', 'Laura', 'Maria', 'Marina', 'Marta', 'Monica', 'Paola', 'Roberta', 'Rossana', 'Sara', 'Silvia', 'Simona', 'Stefania', 'Valentina', 'Veronica', 'Alessia', 'Angela', 'Carla', 'Serena'];
+    const cognomi = ['Rossi', 'Russo', 'Ferrari', 'Esposito', 'Bianchi', 'Romano', 'Colombo', 'Ricci', 'Marino', 'Greco', 'Bruno', 'Gallo', 'Conti', 'De Luca', 'Mancini', 'Costa', 'Giordano', 'Rizzo', 'Lombardi', 'Moretti', 'Barbieri', 'Fontana', 'Santoro', 'Mariani', 'Rinaldi', 'Caruso', 'Ferraro', 'Leone', 'Longo', 'Gatti', 'Martini', 'Giacomelli', 'Benedetti', 'Palmieri', 'Bernardi', 'Martino', 'Fiore', 'Coppola', 'De Santis', 'D\'Angelo'];
+    const citta = ['Roma', 'Milano', 'Napoli', 'Torino', 'Palermo', 'Genova', 'Bologna', 'Firenze', 'Bari', 'Catania', 'Venezia', 'Verona', 'Messina', 'Padova', 'Trieste', 'Taranto', 'Brescia', 'Parma', 'Prato', 'Modena', 'Reggio Calabria', 'Reggio Emilia', 'Perugia', 'Livorno', 'Ravenna', 'Cagliari', 'Foggia', 'Rimini', 'Salerno', 'Ferrara'];
+    const vie = ['Via Roma', 'Via Garibaldi', 'Via Mazzini', 'Via Verdi', 'Via Dante', 'Via Cavour', 'Via Manzoni', 'Via Leopardi', 'Via Petrarca', 'Via Boccaccio', 'Via Nazionale', 'Corso Italia', 'Corso Vittorio', 'Corso Buenos Aires', 'Viale dei Mille', 'Viale Europa', 'Via XX Settembre', 'Via IV Novembre', 'Piazza Duomo', 'Piazza San Marco'];
+    const professioni = ['Impiegato', 'Operaio', 'Insegnante', 'Medico', 'Avvocato', 'Commercialista', 'Architetto', 'Ingegnere', 'Farmacista', 'Dentista', 'Infermiere', 'Commesso', 'Artigiano', 'Pensionato', 'Studente', 'Disoccupato', 'Libero Professionista', 'Imprenditore', 'Dirigente', 'Funzionario'];
+
+    function init() {
+        checkLocalStorage();
+        loadTheme();
+        caricaPazienti();
+        renderSymptomsGrid('symptomsGrid');
+        renderSymptomsGrid('modalSymptomsGrid');
+        aggiornaStatistiche();
+        
+        window.addEventListener('beforeunload', function() {
+            salvaSuStorage();
+        });
+    }
+
+    function checkLocalStorage() {
+        try {
+            const test = '__test__';
+            localStorage.setItem(test, test);
+            localStorage.removeItem(test);
+            localStorageAvailable = true;
+            document.getElementById('storageStatus').className = 'storage-status storage-ok';
+            document.getElementById('storageStatus').textContent = '✅ Memoria locale attiva - I dati persistono automaticamente tra le sessioni';
+        } catch (e) {
+            localStorageAvailable = false;
+            document.getElementById('storageStatus').className = 'storage-status storage-warn';
+            document.getElementById('storageStatus').textContent = '⚠️ Memoria locale non disponibile - Usa Backup/Ripristina per salvare i dati';
+        }
+    }
+
+    function loadTheme() {
+        const savedTheme = localStorage.getItem(THEME_KEY) || 'light';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeButton(savedTheme);
+    }
+
+    function toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem(THEME_KEY, newTheme);
+        updateThemeButton(newTheme);
+        mostraNotifica(newTheme === 'dark' ? '🌙 Tema scuro attivato' : '☀️ Tema chiaro attivato');
+    }
+
+    function updateThemeButton(theme) {
+        const icon = document.getElementById('themeIcon');
+        const text = document.getElementById('themeText');
+        if (theme === 'dark') {
+            icon.textContent = '☀️';
+            text.textContent = 'Tema Chiaro';
+        } else {
+            icon.textContent = '🌙';
+            text.textContent = 'Tema Scuro';
+        }
+    }
+
+    function caricaPazienti() {
+        if (localStorageAvailable) {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    pazienti = JSON.parse(saved);
+                }
+            } catch (e) {
+                console.error('Errore caricamento:', e);
+                pazienti = [];
+            }
+        }
+        aggiornaTabella();
+        aggiornaStatistiche();
+    }
+
+    function salvaSuStorage() {
+        if (localStorageAvailable) {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(pazienti));
+            const now = new Date();
+            localStorage.setItem(BACKUP_KEY_DATE, now.toISOString());
+            aggiornaStatistiche();
+        }
+    }
+
+    const sintomiDentali = [
+        { id: 's1', nome: 'Dolore dentale acuto' }, { id: 's2', nome: 'Dolore dentale cronico' },
+        { id: 's3', nome: 'Sensibilità al caldo' }, { id: 's4', nome: 'Sensibilità al freddo' },
+        { id: 's5', nome: 'Sensibilità al dolce' }, { id: 's6', nome: 'Sensibilità all\'acido' },
+        { id: 's7', nome: 'Dolore alla masticazione' }, { id: 's8', nome: 'Dolore spontaneo' },
+        { id: 's9', nome: 'Dolore notturno' }, { id: 's10', nome: 'Pulsazione dentale' },
+        { id: 's11', nome: 'Carie superficiale' }, { id: 's12', nome: 'Carie profonda' },
+        { id: 's13', nome: 'Carie interprossimale' }, { id: 's14', nome: 'Dente scheggiato' },
+        { id: 's15', nome: 'Dente fratturato' }, { id: 's16', nome: 'Dente mobile' },
+        { id: 's17', nome: 'Dente incluso' }, { id: 's18', nome: 'Dente devitalizzato' },
+        { id: 's19', nome: 'Perdita otturazione' }, { id: 's20', nome: 'Otturazione fratturata' },
+        { id: 's21', nome: 'Gengivite' }, { id: 's22', nome: 'Parodontite' },
+        { id: 's23', nome: 'Sanguinamento gengive' }, { id: 's24', nome: 'Gengive retratte' },
+        { id: 's25', nome: 'Gengive gonfie' }, { id: 's26', nome: 'Gengive arrossate' },
+        { id: 's27', nome: 'Tasche parodontali' }, { id: 's28', nome: 'Mobilità dentale' },
+        { id: 's29', nome: 'Migrazione dentale' }, { id: 's30', nome: 'Perdita attacco gengivale' },
+        { id: 's31', nome: 'Ascesso dentale' }, { id: 's32', nome: 'Ascesso gengivale' },
+        { id: 's33', nome: 'Fistola' }, { id: 's34', nome: 'Gonfiore viso' },
+        { id: 's35', nome: 'Gonfiore guancia' }, { id: 's36', nome: 'Linfonodi ingrossati' },
+        { id: 's37', nome: 'Febbre' }, { id: 's38', nome: 'Alitosi' },
+        { id: 's39', nome: 'Sapore metallico' }, { id: 's40', nome: 'Pus' },
+        { id: 's41', nome: 'Bruxismo' }, { id: 's42', nome: 'Digrignamento notturno' },
+        { id: 's43', nome: 'Serramento dentale' }, { id: 's44', nome: 'Dolore ATM' },
+        { id: 's45', nome: 'Click mandibolare' }, { id: 's46', nome: 'Limitazione apertura bocca' },
+        { id: 's47', nome: 'Deviazione mandibolare' }, { id: 's48', nome: 'Dolore muscolare' },
+        { id: 's49', nome: 'Cefalea tensiva' }, { id: 's50', nome: 'Dolore auricolare' },
+        { id: 's51', nome: 'Afta' }, { id: 's52', nome: 'Lesione mucosa' },
+        { id: 's53', nome: 'Lichen planus' }, { id: 's54', nome: 'Candidosi orale' },
+        { id: 's55', nome: 'Herpes labiale' }, { id: 's56', nome: 'Secchezza bocca' },
+        { id: 's57', nome: 'Eccesso salivazione' }, { id: 's58', nome: 'Alterazione gusto' },
+        { id: 's59', nome: 'Bruciore lingua' }, { id: 's60', nome: 'Macchie bianche' },
+        { id: 's61', nome: 'Denti gialli' }, { id: 's62', nome: 'Macchie dentali' },
+        { id: 's63', nome: 'Tartaro' }, { id: 's64', nome: 'Placca abbondante' },
+        { id: 's65', nome: 'Diastema' }, { id: 's66', nome: 'Affollamento dentale' },
+        { id: 's67', nome: 'Malocclusione' }, { id: 's68', nome: 'Morso profondo' },
+        { id: 's69', nome: 'Morso aperto' }, { id: 's70', nome: 'Morso incrociato' },
+        { id: 's71', nome: 'Impianto mobile' }, { id: 's72', nome: 'Dolore su impianto' },
+        { id: 's73', nome: 'Peri-implantite' }, { id: 's74', nome: 'Protesi mobile' },
+        { id: 's75', nome: 'Protesi fratturata' }, { id: 's76', nome: 'Fastidio protesi' },
+        { id: 's77', nome: 'Lesione da protesi' }, { id: 's78', nome: 'Paura dentista' },
+        { id: 's79', nome: 'Ansia trattamento' }, { id: 's80', nome: 'Richiesta sbiancamento' }
+    ];
+
+    function renderSymptomsGrid(containerId, selectedSymptoms = []) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        sintomiDentali.forEach(sintomo => {
+            const item = document.createElement('div');
+            item.className = 'symptom-item';
+            const isChecked = selectedSymptoms.includes(sintomo.nome);
+            item.innerHTML = `
+                <input type="checkbox" value="${sintomo.nome}" id="${containerId}_${sintomo.id}" ${isChecked ? 'checked' : ''}>
+                <label for="${containerId}_${sintomo.id}">${sintomo.nome}</label>
+            `;
+            container.appendChild(item);
+        });
+    }
+
+    function generaPazientiTest() {
+        if (pazienti.length > 0) {
+            if (!confirm('⚠️ Hai già dei pazienti salvati. I nuovi pazienti verranno AGGIUNTI a quelli esistenti. Continuare?')) {
+                return;
+            }
+        }
+        
+        const progressBar = document.getElementById('progressBar');
+        progressBar.classList.add('active');
+        
+        setTimeout(() => {
+            const nuoviPazienti = [];
+            
+            for (let i = 0; i < 100; i++) {
+                const sesso = Math.random() > 0.5 ? 'M' : 'F';
+                const nome = sesso === 'M' 
+                    ? nomiMaschili[Math.floor(Math.random() * nomiMaschili.length)]
+                    : nomiFemminili[Math.floor(Math.random() * nomiFemminili.length)];
+                const cognome = cognomi[Math.floor(Math.random() * cognomi.length)];
+                const cittaRandom = citta[Math.floor(Math.random() * citta.length)];
+                const viaRandom = vie[Math.floor(Math.random() * vie.length)];
+                const numeroCivico = Math.floor(Math.random() * 200) + 1;
+                const cap = generaCAP(cittaRandom);
+                const provincia = generaProvincia(cittaRandom);
+                const telefono = generaTelefono();
+                const email = generaEmail(nome, cognome);
+                const dataNascita = generaDataNascita();
+                const professione = professioni[Math.floor(Math.random() * professioni.length)];
+                
+                const numSintomi = Math.floor(Math.random() * 8) + 1;
+                const sintomiSelezionati = [];
+                const sintomiCopy = [...sintomiDentali];
+                for (let j = 0; j < numSintomi; j++) {
+                    const index = Math.floor(Math.random() * sintomiCopy.length);
+                    sintomiSelezionati.push(sintomiCopy[index].nome);
+                    sintomiCopy.splice(index, 1);
+                }
+                
+                const giorniFa = Math.floor(Math.random() * 90);
+                const dataInserimento = new Date();
+                dataInserimento.setDate(dataInserimento.getDate() - giorniFa);
+                
+                const giorniAgg = Math.floor(Math.random() * 30);
+                const dataAggiornamento = new Date(dataInserimento);
+                dataAggiornamento.setDate(dataAggiornamento.getDate() + giorniAgg);
+                
+                nuoviPazienti.push({
+                    id: Date.now() + i,
+                    nome: nome,
+                    cognome: cognome,
+                    dataNascita: dataNascita,
+                    sesso: sesso,
+                    codiceFiscale: generaCodiceFiscale(nome, cognome, sesso, dataNascita, cittaRandom),
+                    telefono: telefono,
+                    email: email,
+                    indirizzo: `${viaRandom} ${numeroCivico}`,
+                    citta: cittaRandom,
+                    cap: cap,
+                    provincia: provincia,
+                    professione: professione,
+                    sintomi: sintomiSelezionati,
+                    note: generaNoteCasuali(),
+                    dataInserimento: dataInserimento.toLocaleString('it-IT'),
+                    dataAggiornamento: dataAggiornamento.toLocaleString('it-IT')
+                });
+                
+                progressBar.style.width = `${((i + 1) / 100) * 100}%`;
+            }
+            
+            pazienti = pazienti.concat(nuoviPazienti);
+            salvaSuStorage();
+            aggiornaTabella();
+            
+            progressBar.classList.remove('active');
+            progressBar.style.width = '0%';
+            
+            mostraNotifica(`✅ Generati 100 pazienti test con successo!`);
+        }, 100);
+    }
+
+    function generaCAP(citta) {
+        const capMap = {
+            'Roma': '00100', 'Milano': '20100', 'Napoli': '80100', 'Torino': '10100',
+            'Palermo': '90100', 'Genova': '16100', 'Bologna': '40100', 'Firenze': '50100',
+            'Bari': '70100', 'Catania': '95100', 'Venezia': '30100', 'Verona': '37100'
+        };
+        if (capMap[citta]) {
+            return capMap[citta] + Math.floor(Math.random() * 99);
+        }
+        return Math.floor(Math.random() * 89999 + 10000).toString();
+    }
+
+    function generaProvincia(citta) {
+        const provMap = {
+            'Roma': 'RM', 'Milano': 'MI', 'Napoli': 'NA', 'Torino': 'TO',
+            'Palermo': 'PA', 'Genova': 'GE', 'Bologna': 'BO', 'Firenze': 'FI',
+            'Bari': 'BA', 'Catania': 'CT', 'Venezia': 'VE', 'Verona': 'VR'
+        };
+        return provMap[citta] || 'XX';
+    }
+
+    function generaTelefono() {
+        const prefissi = ['333', '334', '335', '336', '337', '338', '339', '340', '341', '342', '343', '344', '345', '346', '347', '348', '349'];
+        const prefisso = prefissi[Math.floor(Math.random() * prefissi.length)];
+        const numero = Math.floor(Math.random() * 8999999 + 1000000);
+        return `+39 ${prefisso} ${numero}`;
+    }
+
+    function generaEmail(nome, cognome) {
+        const domini = ['gmail.com', 'yahoo.it', 'libero.it', 'hotmail.it', 'outlook.it', 'tiscali.it'];
+        const dominio = domini[Math.floor(Math.random() * domini.length)];
+        return `${nome.toLowerCase()}.${cognome.toLowerCase()}@${dominio}`;
+    }
+
+    function generaDataNascita() {
+        const anno = Math.floor(Math.random() * 50 + 1950);
+        const mese = Math.floor(Math.random() * 12 + 1).toString().padStart(2, '0');
+        const giorno = Math.floor(Math.random() * 28 + 1).toString().padStart(2, '0');
+        return `${anno}-${mese}-${giorno}`;
+    }
+
+    function generaCodiceFiscale(nome, cognome, sesso, dataNascita, citta) {
+        const consonanti = nome.replace(/[aeiou]/gi, '').substring(0, 3).toUpperCase();
+        const vocali = nome.replace(/[^aeiou]/gi, '').substring(0, 3).toUpperCase();
+        const cfNome = (consonanti + vocali).substring(0, 3).padEnd(3, 'X');
+        
+        const consCognome = cognome.replace(/[aeiou]/gi, '').substring(0, 3).toUpperCase();
+        const vocCognome = cognome.replace(/[^aeiou]/gi, '').substring(0, 3).toUpperCase();
+        const cfCognome = (consCognome + vocCognome).substring(0, 3).padEnd(3, 'X');
+        
+        const anno = dataNascita.substring(2, 4);
+        const mese = dataNascita.substring(5, 7);
+        const giorno = sesso === 'M' ? dataNascita.substring(8, 10) : (parseInt(dataNascita.substring(8, 10)) + 40).toString();
+        
+        return `${cfCognome}${cfNome}${anno}${mese}${giorno}XXXX`;
+    }
+
+    function generaNoteCasuali() {
+        const notePossibili = [
+            'Paziente collaborante', 'Richiede anestesia', 'Allergia a penicillina',
+            'In terapia con anticoagulanti', 'Diabetico', 'Iperteso',
+            'Fumatore', 'Gravidanza in corso', 'Nessuna patologia significativa',
+            'Precedenti interventi dentali', 'Paura del dentista', 'Richiede appuntamento urgente'
+        ];
+        const numNote = Math.floor(Math.random() * 3);
+        if (numNote === 0) return '';
+        const selezionate = [];
+        for (let i = 0; i < numNote; i++) {
+            const index = Math.floor(Math.random() * notePossibili.length);
+            if (!selezionate.includes(notePossibili[index])) {
+                selezionate.push(notePossibili[index]);
+            }
+        }
+        return selezionate.join('; ');
+    }
+
+    function salvaPaziente() {
+        const dati = raccogliDatiForm();
+        
+        if (!dati.nome || !dati.cognome) {
+            mostraNotifica('⚠️ Inserisci almeno Nome e Cognome!', '#dc3545');
+            return;
+        }
+        
+        const nuovoPaziente = {
+            id: Date.now(),
+            ...dati,
+            dataInserimento: new Date().toLocaleString('it-IT'),
+            dataAggiornamento: new Date().toLocaleString('it-IT')
+        };
+        
+        pazienti.push(nuovoPaziente);
+        salvaSuStorage();
+        resetForm();
+        aggiornaTabella();
+        mostraNotifica('✅ Paziente salvato con successo!');
+    }
+
+    function raccogliDatiForm() {
+        const checkboxes = document.querySelectorAll('#symptomsGrid input[type="checkbox"]:checked');
+        const sintomiSelezionati = Array.from(checkboxes).map(cb => cb.value);
+        
+        return {
+            nome: document.getElementById('nome').value.trim(),
+            cognome: document.getElementById('cognome').value.trim(),
+            dataNascita: document.getElementById('dataNascita').value,
+            sesso: document.getElementById('sesso').value,
+            codiceFiscale: document.getElementById('codiceFiscale').value.trim(),
+            telefono: document.getElementById('telefono').value.trim(),
+            email: document.getElementById('email').value.trim(),
+            indirizzo: document.getElementById('indirizzo').value.trim(),
+            citta: document.getElementById('citta').value.trim(),
+            cap: document.getElementById('cap').value.trim(),
+            provincia: document.getElementById('provincia').value.trim(),
+            professione: document.getElementById('professione').value.trim(),
+            sintomi: sintomiSelezionati,
+            note: document.getElementById('note').value.trim()
+        };
+    }
+
+    function resetForm() {
+        document.getElementById('nome').value = '';
+        document.getElementById('cognome').value = '';
+        document.getElementById('dataNascita').value = '';
+        document.getElementById('sesso').value = '';
+        document.getElementById('codiceFiscale').value = '';
+        document.getElementById('telefono').value = '';
+        document.getElementById('email').value = '';
+        document.getElementById('indirizzo').value = '';
+        document.getElementById('citta').value = '';
+        document.getElementById('cap').value = '';
+        document.getElementById('provincia').value = '';
+        document.getElementById('professione').value = '';
+        document.getElementById('note').value = '';
+        document.querySelectorAll('#symptomsGrid input[type="checkbox"]').forEach(cb => cb.checked = false);
+        editingPatientId = null;
+    }
+
+    function aggiornaTabella(filtrati = null) {
+        const tbody = document.getElementById('patientTableBody');
+        const datiDaMostrare = filtrati || pazienti;
+        
+        tbody.innerHTML = '';
+        
+        if (datiDaMostrare.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="7" class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <h3>Nessun paziente trovato</h3>
+                        <p>Inserisci i dati del primo paziente per iniziare</p>
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+        
+        [...datiDaMostrare].reverse().forEach(p => {
+            const row = document.createElement('tr');
+            row.onclick = (e) => {
+                if (!e.target.classList.contains('btn-action')) {
+                    apriSchedaPaziente(p.id);
+                }
+            };
+            
+            const sintomiCount = p.sintomi ? p.sintomi.length : 0;
+            
+            row.innerHTML = `
+                <td><strong>${p.nome || ''}</strong></td>
+                <td><strong>${p.cognome || ''}</strong></td>
+                <td>${p.telefono || '-'}</td>
+                <td>${p.dataNascita ? new Date(p.dataNascita).toLocaleDateString('it-IT') : '-'}</td>
+                <td>${p.dataAggiornamento ? p.dataAggiornamento.split(',')[0] : '-'}</td>
+                <td><span style="background:var(--bg-tag);color:#1976d2;padding:4px 10px;border-radius:12px;font-size:0.85rem;">${sintomiCount} sintomi</span></td>
+                <td>
+                    <button class="btn-action btn-view" onclick="event.stopPropagation(); apriSchedaPaziente(${p.id})">👁️ Vedi</button>
+                    <button class="btn-action btn-delete" onclick="event.stopPropagation(); cancellaPaziente(${p.id})">🗑️</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+    }
+
+    // CORREZIONE: Funzione ricerca migliorata
+    function cercaPaziente() {
+        const query = document.getElementById('searchBox').value.toLowerCase().trim();
+        const searchResultsInfo = document.getElementById('searchResultsInfo');
+        
+        if (!query) {
+            aggiornaTabella();
+            searchResultsInfo.textContent = '';
+            return;
+        }
+        
+        const filtrati = pazienti.filter(p => {
+            // Controllo null/undefined per tutti i campi
+            const nome = (p.nome || '').toLowerCase();
+            const cognome = (p.cognome || '').toLowerCase();
+            const telefono = (p.telefono || '').replace(/[^0-9]/g, '');
+            const email = (p.email || '').toLowerCase();
+            const citta = (p.citta || '').toLowerCase();
+            const professione = (p.professione || '').toLowerCase();
+            const queryNumeri = query.replace(/[^0-9]/g, '');
+            
+            return nome.includes(query) ||
+                   cognome.includes(query) ||
+                   (telefono && queryNumeri && telefono.includes(queryNumeri)) ||
+                   email.includes(query) ||
+                   citta.includes(query) ||
+                   professione.includes(query);
+        });
+        
+        // Mostra numero risultati
+        if (filtrati.length > 0) {
+            searchResultsInfo.textContent = `${filtrati.length} trovati`;
+        } else {
+            searchResultsInfo.textContent = 'Nessun risultato';
+        }
+        
+        aggiornaTabella(filtrati);
+    }
+
+    function apriSchedaPaziente(id) {
+        const paziente = pazienti.find(p => p.id === id);
+        if (!paziente) return;
+        
+        editingPatientId = id;
+        
+        document.getElementById('modalNome').value = paziente.nome || '';
+        document.getElementById('modalCognome').value = paziente.cognome || '';
+        document.getElementById('modalDataNascita').value = paziente.dataNascita || '';
+        document.getElementById('modalSesso').value = paziente.sesso || '';
+        document.getElementById('modalCodiceFiscale').value = paziente.codiceFiscale || '';
+        document.getElementById('modalTelefono').value = paziente.telefono || '';
+        document.getElementById('modalEmail').value = paziente.email || '';
+        document.getElementById('modalIndirizzo').value = paziente.indirizzo || '';
+        document.getElementById('modalCitta').value = paziente.citta || '';
+        document.getElementById('modalCap').value = paziente.cap || '';
+        document.getElementById('modalProvincia').value = paziente.provincia || '';
+        document.getElementById('modalProfessione').value = paziente.professione || '';
+        
+        renderSymptomsGrid('modalSymptomsGrid', paziente.sintomi || []);
+        
+        document.getElementById('modalNote').value = paziente.note || '';
+        
+        document.getElementById('modalDataInserimento').textContent = paziente.dataInserimento || '-';
+        document.getElementById('modalDataAggiornamento').textContent = paziente.dataAggiornamento || '-';
+        
+        document.getElementById('modalTitle').textContent = `🦷 Scheda: ${paziente.cognome} ${paziente.nome}`;
+        
+        document.getElementById('patientModal').classList.add('active');
+    }
+
+    function chiudiModal() {
+        document.getElementById('patientModal').classList.remove('active');
+        editingPatientId = null;
+    }
+
+    function aggiornaPaziente() {
+        if (!editingPatientId) return;
+        
+        const index = pazienti.findIndex(p => p.id === editingPatientId);
+        if (index === -1) return;
+        
+        const checkboxes = document.querySelectorAll('#modalSymptomsGrid input[type="checkbox"]:checked');
+        const sintomiSelezionati = Array.from(checkboxes).map(cb => cb.value);
+        
+        pazienti[index] = {
+            ...pazienti[index],
+            nome: document.getElementById('modalNome').value.trim(),
+            cognome: document.getElementById('modalCognome').value.trim(),
+            dataNascita: document.getElementById('modalDataNascita').value,
+            sesso: document.getElementById('modalSesso').value,
+            codiceFiscale: document.getElementById('modalCodiceFiscale').value.trim(),
+            telefono: document.getElementById('modalTelefono').value.trim(),
+            email: document.getElementById('modalEmail').value.trim(),
+            indirizzo: document.getElementById('modalIndirizzo').value.trim(),
+            citta: document.getElementById('modalCitta').value.trim(),
+            cap: document.getElementById('modalCap').value.trim(),
+            provincia: document.getElementById('modalProvincia').value.trim(),
+            professione: document.getElementById('modalProfessione').value.trim(),
+            sintomi: sintomiSelezionati,
+            note: document.getElementById('modalNote').value.trim(),
+            dataAggiornamento: new Date().toLocaleString('it-IT')
+        };
+        
+        salvaSuStorage();
+        aggiornaTabella();
+        chiudiModal();
+        mostraNotifica('✅ Scheda paziente aggiornata!');
+    }
+
+    function cancellaPaziente(id) {
+        if (confirm('Sei sicuro di voler eliminare questo paziente? Questa azione non è reversibile.')) {
+            pazienti = pazienti.filter(p => p.id !== id);
+            salvaSuStorage();
+            aggiornaTabella();
+            mostraNotifica('🗑️ Paziente eliminato');
+        }
+    }
+
+    function cancellaTutto() {
+        if (pazienti.length === 0) {
+            mostraNotifica('⚠️ Nessun paziente da cancellare!', '#dc3545');
+            return;
+        }
+        if (confirm('⚠️ ATTENZIONE: Stai per cancellare TUTTI i pazienti! Questa azione non è reversibile. Sei sicuro?')) {
+            pazienti = [];
+            salvaSuStorage();
+            aggiornaTabella();
+            mostraNotifica('🗑️ Tutti i pazienti sono stati cancellati');
+        }
+    }
+
+    function aggiornaStatistiche() {
+        document.getElementById('totalPatients').textContent = pazienti.length;
+        
+        const oggi = new Date().toLocaleDateString('it-IT');
+        const oggiCount = pazienti.filter(p => {
+            const dataAgg = p.dataAggiornamento ? p.dataAggiornamento.split(',')[0] : '';
+            return dataAgg === oggi;
+        }).length;
+        document.getElementById('todayPatients').textContent = oggiCount;
+        
+        const lastBackupISO = localStorage.getItem(BACKUP_KEY_DATE);
+        if (lastBackupISO) {
+            try {
+                const lastBackupDate = new Date(lastBackupISO);
+                document.getElementById('lastSave').textContent = lastBackupDate.toLocaleDateString('it-IT', { 
+                    day: '2-digit', 
+                    month: '2-digit', 
+                    year: '2-digit' 
+                });
+            } catch (e) {
+                document.getElementById('lastSave').textContent = '--';
+            }
+        } else {
+            document.getElementById('lastSave').textContent = '--';
+        }
+        
+        const storageUsed = JSON.stringify(pazienti).length;
+        const storageKB = (storageUsed / 1024).toFixed(2);
+        document.getElementById('storageSize').textContent = storageKB + ' KB';
+    }
+
+    function scaricaExcel() {
+        if (pazienti.length === 0) {
+            mostraNotifica('⚠️ Nessun paziente da esportare!', '#dc3545');
+            return;
+        }
+
+        const header = [
+            "Nome", "Cognome", "Data Nascita", "Sesso", "Codice Fiscale",
+            "Telefono", "Email", "Indirizzo", "Città", "CAP", "Provincia",
+            "Professione", "Sintomi", "Note", "Data Inserimento", "Data Aggiornamento"
+        ];
+        
+        const rows = pazienti.map(p => [
+            p.nome, p.cognome, p.dataNascita, p.sesso, p.codiceFiscale,
+            p.telefono, p.email, p.indirizzo, p.citta, p.cap, p.provincia,
+            p.professione, (p.sintomi || []).join('; '), p.note, p.dataInserimento, p.dataAggiornamento
+        ]);
+
+        const ws = XLSX.utils.aoa_to_sheet([header, ...rows]);
+        ws['!cols'] = [
+            {wch: 20}, {wch: 20}, {wch: 15}, {wch: 10}, {wch: 20},
+            {wch: 20}, {wch: 30}, {wch: 30}, {wch: 20}, {wch: 10},
+            {wch: 10}, {wch: 20}, {wch: 50}, {wch: 50}, {wch: 20}, {wch: 20}
+        ];
+        
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pazienti");
+        
+        const nomeFile = `Registro_Pazienti_${new Date().toISOString().split('T')[0]}.xlsx`;
+        XLSX.writeFile(wb, nomeFile);
+        mostraNotifica('📥 File Excel scaricato con successo!');
+    }
+
+    function exportDati() {
+        if (pazienti.length === 0) {
+            mostraNotifica('⚠️ Nessun dato da esportare!', '#dc3545');
+            return;
+        }
+        const dataJson = JSON.stringify(pazienti, null, 2);
+        const blob = new Blob([dataJson], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Backup_Pazienti_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        mostraNotifica('📤 Backup dati esportato con successo!');
+    }
+
+    function importDati(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const datiImportati = JSON.parse(e.target.result);
+                if (!Array.isArray(datiImportati)) throw new Error('Formato file non valido');
+                
+                if (confirm(`📥 Trovati ${datiImportati.length} pazienti. Vuoi UNIRLI ai dati esistenti? (OK) o SOSTITUIRLI? (Annulla)`)) {
+                    const existingIds = new Set(pazienti.map(p => p.id));
+                    const nuovi = datiImportati.filter(p => !existingIds.has(p.id));
+                    pazienti = pazienti.concat(nuovi);
+                    mostraNotifica(`📥 Importati ${nuovi.length} nuovi pazienti!`);
+                } else {
+                    pazienti = datiImportati;
+                    mostraNotifica('📥 Dati sostituiti con successo!');
+                }
+                salvaSuStorage();
+                aggiornaTabella();
+            } catch (err) {
+                mostraNotifica('❌ Errore importazione: ' + err.message, '#dc3545');
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+
+    function mostraNotifica(messaggio, colore = '#28a745') {
+        const notification = document.getElementById('notification');
+        notification.textContent = messaggio;
+        notification.style.backgroundColor = colore;
+        notification.style.display = 'block';
+        setTimeout(() => { notification.style.display = 'none'; }, 3000);
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            chiudiModal();
+        }
+    });
+
+    document.getElementById('patientModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            chiudiModal();
+        }
+    });
+
+    init();
+</script>
+
+</body>
+</html>
